@@ -41,6 +41,20 @@ namespace io.github.azukimochi
         {
             GetWindow<AIAssistHelperWindow>("ChatGPT Helper");
         }
+        private void OnEnable (){
+            Application.logMessageReceived += HandleLog;
+        }
+        private void OnDisable()
+        {
+            Application.logMessageReceived -= HandleLog;
+        }
+        void HandleLog(string logString, string stackTrace, LogType type)
+        {
+            if (type == LogType.Error || type == LogType.Exception)
+            {
+                errorLog += logString + "\n" + stackTrace + "\n";
+            }
+        }
 
         void OnGUI()
         {
@@ -163,7 +177,6 @@ namespace io.github.azukimochi
                     return _tabToggles;
                 }
             }
-        
             public static readonly GUIStyle TabButtonStyle = "LargeButton";
 
             // GUI.ToolbarButtonSize.FitToContentsも設定できる
