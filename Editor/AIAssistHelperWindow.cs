@@ -25,9 +25,11 @@ namespace io.github.azukimochi
         private const string OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
         private static string OPENAI_API_KEY = "";
 
-        string errorLog = "";
-        string solution = "";
+        private string errorLog = "";
+        private string solution = "";
+        private string settings = "Unityで開発をしていたところ、次のエラーログが出力されました。次に送信するエラーログを解析して問題を特定してください。";
         private Tab _tab = Tab.Main;
+        private Vector2 _scrollPosition_Settings = Vector2.zero;
         private Vector2 _scrollPosition_ErrorLog = Vector2.zero;
         private Vector2 _scrollPosition_Solution = Vector2.zero;
 
@@ -60,7 +62,6 @@ namespace io.github.azukimochi
         {
             _tab = (Tab)GUILayout.Toolbar((int)_tab, Styles.TabToggles, Styles.TabButtonStyle, Styles.TabButtonSize);
             
-            GUILayout.FlexibleSpace();
             switch (_tab)
             {
                 case Tab.Main:
@@ -73,6 +74,7 @@ namespace io.github.azukimochi
         }
         public void DrawMainTab()
         {
+            GUILayout.FlexibleSpace();
             var style = new GUIStyle(EditorStyles.textArea) {wordWrap = true};
             
             GUILayout.Label("Error Log", EditorStyles.boldLabel);
@@ -94,7 +96,6 @@ namespace io.github.azukimochi
                 // OpenAI APIを呼び出して解決策を取得する関数
                 //solution = GetSolutionFromChatGPT(errorLog);
                 
-                string settings = "Unityで開発をしていたところ、次のエラーログが出力されました。次に送信するエラーログを解析して問題を特定してください。";
                 solution = Completion(errorLog, settings).Item1;
             }
 
@@ -110,7 +111,15 @@ namespace io.github.azukimochi
         {
             GUILayout.Label("OpenAI API Key" , EditorStyles.boldLabel);
             OPENAI_API_KEY = EditorGUILayout.TextField(OPENAI_API_KEY);
-            GUILayout.Label("SelectModel" , EditorStyles.boldLabel);
+            
+            GUILayout.Space(20);
+            
+            GUILayout.Label("Settings", EditorStyles.boldLabel);
+            _scrollPosition_Settings = EditorGUILayout.BeginScrollView(_scrollPosition_Settings, GUILayout.Height(100));
+            {
+                settings = EditorGUILayout.TextArea(settings, GUILayout.ExpandHeight(true));
+            };
+            EditorGUILayout.EndScrollView(); 
         }
 
         public (string, List<Dictionary<string, string>>) Completion(string newMessageText, string settingsText = "",
