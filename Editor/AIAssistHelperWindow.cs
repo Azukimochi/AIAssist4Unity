@@ -36,7 +36,7 @@ namespace io.github.azukimochi
             Main,
             Settings,
         }
-        [MenuItem("Window/ChatGPT Helper")]
+        [MenuItem("Window/AI Assist Helper")]
         public static void ShowWindow()
         {
             GetWindow<AIAssistHelperWindow>("AI Assist Helper");
@@ -59,6 +59,7 @@ namespace io.github.azukimochi
         void OnGUI()
         {
             _tab = (Tab)GUILayout.Toolbar((int)_tab, Styles.TabToggles, Styles.TabButtonStyle, Styles.TabButtonSize);
+            
             GUILayout.FlexibleSpace();
             switch (_tab)
             {
@@ -78,7 +79,7 @@ namespace io.github.azukimochi
 
             _scrollPosition_ErrorLog = EditorGUILayout.BeginScrollView(_scrollPosition_ErrorLog, GUILayout.Height(100));
             {
-                errorLog = EditorGUILayout.TextArea(errorLog, style);
+                errorLog = EditorGUILayout.TextArea(errorLog, GUILayout.ExpandHeight(true));
             };
             EditorGUILayout.EndScrollView(); 
             
@@ -101,7 +102,7 @@ namespace io.github.azukimochi
             GUILayout.Label("Solution", EditorStyles.boldLabel);
             _scrollPosition_Solution = EditorGUILayout.BeginScrollView(_scrollPosition_Solution, GUILayout.Height(300));
             {
-                EditorGUILayout.TextArea(solution,style);
+                solution = EditorGUILayout.TextArea(solution, GUILayout.ExpandHeight(true));
             }
             EditorGUILayout.EndScrollView();
         }
