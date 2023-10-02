@@ -39,7 +39,7 @@ namespace io.github.azukimochi
         [MenuItem("Window/ChatGPT Helper")]
         public static void ShowWindow()
         {
-            GetWindow<AIAssistHelperWindow>("ChatGPT Helper");
+            GetWindow<AIAssistHelperWindow>("AI Assist Helper");
         }
         private void OnEnable (){
             Application.logMessageReceived += HandleLog;
@@ -107,8 +107,9 @@ namespace io.github.azukimochi
         }
         public void DrawSettingsTab()
         {
-            GUILayout.Label("OpenAI API Key");
+            GUILayout.Label("OpenAI API Key" , EditorStyles.boldLabel);
             OPENAI_API_KEY = EditorGUILayout.TextField(OPENAI_API_KEY);
+            GUILayout.Label("SelectModel" , EditorStyles.boldLabel);
         }
 
         public (string, List<Dictionary<string, string>>) Completion(string newMessageText, string settingsText = "",
