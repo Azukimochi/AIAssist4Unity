@@ -130,7 +130,7 @@ namespace io.github.azukimochi
         public void DrawSettingsTab()
         {
             GUILayout.Label("OpenAI API Key" , EditorStyles.boldLabel);
-            OPENAI_API_KEY = EditorGUILayout.TextField(OPENAI_API_KEY);
+            OPENAI_API_KEY = EditorGUILayout.PasswordField(OPENAI_API_KEY);
             
             GUILayout.Space(20);
 
