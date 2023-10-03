@@ -24,6 +24,7 @@ namespace io.github.azukimochi
         private Vector2 _scrollPosition_Solution = Vector2.zero;
         private bool _SolutionButton = false;
         private bool _UpdateSolution = false;
+        private string api_key;
 
         enum Tab
         {
@@ -51,6 +52,7 @@ namespace io.github.azukimochi
 
         private void OnEnable (){
             Application.logMessageReceived += HandleLog;
+            api_key = Utils.AesDecrypt(EditorPrefs.GetString("OPENAI_API_KEY", ""));
         }
         private void OnDisable()
         {
@@ -131,6 +133,7 @@ namespace io.github.azukimochi
         {
             GUILayout.Label("OpenAI API Key" , EditorStyles.boldLabel);
             OPENAI_API_KEY = EditorGUILayout.PasswordField(OPENAI_API_KEY);
+            OPENAI_API_KEY = api_key;
             
             GUILayout.Space(20);
 
@@ -147,7 +150,15 @@ namespace io.github.azukimochi
             {
                 settings = EditorGUILayout.TextArea(settings, GUILayout.ExpandHeight(true));
             };
-            EditorGUILayout.EndScrollView(); 
+            EditorGUILayout.EndScrollView();
+            GUILayout.Space(20);
+            if (GUILayout.Button("Apply"))
+            {
+                Debug.Log("Encrypt" + Utils.AesEncrypt(OPENAI_API_KEY));
+                EditorPrefs.SetString("OPENAI_API_KEY", Utils.AesEncrypt(OPENAI_API_KEY));
+                Debug.Log("Raw key" + EditorPrefs.GetString("OPENAI_API_KEY", ""));
+                Debug.Log("Decrypt" + Utils.AesDecrypt(EditorPrefs.GetString("OPENAI_API_KEY", "")));
+            }
         }
         
         private static class Styles

@@ -75,17 +75,6 @@ namespace io.github.azukimochi
                     Debug.Log("GPT renponce error");
                     return jsonResponse["error"]["message"].ToString();
                 }
-                
-                
-                if (jsonResponse.TryGetValue("choice", out var choice)
-                    && choice.HasValues
-                    && ((JObject)choice[0]).TryGetValue("message", out var mess)
-                    && ((JObject)mess).TryGetValue("content", out var content)
-                    )
-                {
-                    return content.ToString();
-                }
-                return jsonResponse["error"]["message"].ToString();
             }
         }
     }
