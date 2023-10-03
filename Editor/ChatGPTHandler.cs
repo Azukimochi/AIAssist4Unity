@@ -12,7 +12,7 @@ namespace io.github.azukimochi
     public class ChatGPTHandler : EditorWindow
     {
         public static (string, List<Dictionary<string, string>>) Completion(string newMessageText, string settingsText = "",
-            string api_key = "", string api_url = "",List<Dictionary<string, string>> pastMessages = null)
+            string api_key = "", string api_url = "", string model = "",List<Dictionary<string, string>> pastMessages = null)
         {
             if (pastMessages == null)
             {
@@ -36,7 +36,7 @@ namespace io.github.azukimochi
             };
             pastMessages.Add(newMessage);
 
-            var responseMessageText = CallOpenAI(pastMessages, api_key, api_url);
+            var responseMessageText = CallOpenAI(pastMessages, api_key, api_url, model);
             var responseMessage = new Dictionary<string, string>
             {
                 { "role", "assistant" },
@@ -47,14 +47,14 @@ namespace io.github.azukimochi
             return (responseMessageText, pastMessages);
         }
 
-        private static string CallOpenAI(List<Dictionary<string, string>> messages, string api_key, string api_url)
+        private static string CallOpenAI(List<Dictionary<string, string>> messages, string api_key, string api_url, string selectedModel)
         {
             using (var httpClient = new HttpClient())
             {
                 httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {api_key}");
                 var requestData = new
                 {
-                    model = "gpt-3.5-turbo",
+                    model = selectedModel,
                     messages = messages
                 };
                 var response = httpClient.PostAsync(api_url,

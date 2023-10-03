@@ -27,6 +27,10 @@ namespace io.github.azukimochi
             Main,
             Settings,
         }
+
+        private string[] model = new[] {"gpt-3.5-turbo", "gpt-4" };
+        private int modelIndex = 0;
+        
         [MenuItem("Window/AI Assist Helper")]
         public static void ShowWindow()
         {
@@ -85,7 +89,7 @@ namespace io.github.azukimochi
                 // OpenAI APIを呼び出して解決策を取得する関数
                 //solution = GetSolutionFromChatGPT(errorLog);
                 
-                solution = ChatGPTHandler.Completion(errorLog, settings, OPENAI_API_KEY, OPENAI_API_URL).Item1;
+                solution = ChatGPTHandler.Completion(errorLog, settings, OPENAI_API_KEY, OPENAI_API_URL, model[modelIndex]).Item1;
             }
 
             
@@ -102,6 +106,14 @@ namespace io.github.azukimochi
             OPENAI_API_KEY = EditorGUILayout.TextField(OPENAI_API_KEY);
             
             GUILayout.Space(20);
+
+            var popupModels = new[]
+            {
+                new GUIContent(model[0]),
+                new GUIContent(model[1]),
+            };
+            
+            modelIndex = EditorGUILayout.Popup(label:new GUIContent("Select Model"), selectedIndex:modelIndex, displayedOptions:popupModels);
             
             GUILayout.Label("Settings", EditorStyles.boldLabel);
             _scrollPosition_Settings = EditorGUILayout.BeginScrollView(_scrollPosition_Settings, GUILayout.Height(100));
@@ -110,7 +122,6 @@ namespace io.github.azukimochi
             };
             EditorGUILayout.EndScrollView(); 
         }
-
         
         private static class Styles
         {
