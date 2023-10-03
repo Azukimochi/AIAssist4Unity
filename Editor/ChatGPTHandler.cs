@@ -1,0 +1,70 @@
+﻿using System.Collections.Generic;
+using UnityEngine;
+using System.Net.Http;
+using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using UnityEditor;
+
+namespace io.github.azukimochi 
+{
+    
+    public class ChatGPTHandler : EditorWindow
+    {
+        public static (string, List<Dictionary<string, string>>) Completion(string newMessageText, string settingsText = "",
+            string api_key = "", string api_url = "",List<Dictionary<string, string>> pastMessages = null)
+        {
+            if (pastMessages == null)
+            {
+                pastMessages = new List<Dictionary<string, string>>();
+            }
+
+            if (pastMessages.Count == 0 && !string.IsNullOrEmpty(settingsText))
+            {
+                var systemMessage = new Dictionary<string, string>
+                {
+                    { "role", "system" },
+                    { "content", settingsText }
+                };
+                pastMessages.Add(systemMessage);
+            }
+
+            var newMessage = new Dictionary<string, string>
+            {
+                { "role", "user" },
+                { "content", newMessageText }
+            };
+            pastMessages.Add(newMessage);
+
+            var responseMessageText = CallOpenAI(pastMessages, api_key, api_url);
+            var responseMessage = new Dictionary<string, string>
+            {
+                { "role", "assistant" },
+                { "content", responseMessageText }
+            };
+            pastMessages.Add(responseMessage);
+
+            return (responseMessageText, pastMessages);
+        }
+
+        private static string CallOpenAI(List<Dictionary<string, string>> messages, string api_key, string api_url)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {api_key}");
+                var requestData = new
+                {
+                    model = "gpt-3.5-turbo",
+                    messages = messages
+                };
+                var response = httpClient.PostAsync(api_url,
+                        new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, "application/json"))
+                    .Result;
+                var responseBody = response.Content.ReadAsStringAsync().Result;
+                var jsonResponse = JObject.Parse(responseBody);
+                Debug.Log(jsonResponse.ToString());
+                return jsonResponse["choices"][0]["message"]["content"].ToString();
+            }
+        }
+    }
+}

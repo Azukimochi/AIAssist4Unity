@@ -1,14 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using Cysharp.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Linq;
 using UnityEngine;
-using UnityEngine.Networking;
-using VRC.SDKBase;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -16,9 +8,6 @@ using UnityEditor;
 
 namespace io.github.azukimochi
 {
-    using UnityEngine;
-    using UnityEditor;
-    using System.Collections;
 
     public class AIAssistHelperWindow : EditorWindow
     {
@@ -32,7 +21,7 @@ namespace io.github.azukimochi
         private Vector2 _scrollPosition_Settings = Vector2.zero;
         private Vector2 _scrollPosition_ErrorLog = Vector2.zero;
         private Vector2 _scrollPosition_Solution = Vector2.zero;
-
+        
         enum Tab
         {
             Main,
@@ -96,7 +85,7 @@ namespace io.github.azukimochi
                 // OpenAI APIを呼び出して解決策を取得する関数
                 //solution = GetSolutionFromChatGPT(errorLog);
                 
-                solution = Completion(errorLog, settings).Item1;
+                solution = ChatGPTHandler.Completion(errorLog, settings, OPENAI_API_KEY, OPENAI_API_URL).Item1;
             }
 
             
@@ -122,61 +111,7 @@ namespace io.github.azukimochi
             EditorGUILayout.EndScrollView(); 
         }
 
-        public (string, List<Dictionary<string, string>>) Completion(string newMessageText, string settingsText = "",
-            List<Dictionary<string, string>> pastMessages = null)
-        {
-            if (pastMessages == null)
-            {
-                pastMessages = new List<Dictionary<string, string>>();
-            }
-
-            if (pastMessages.Count == 0 && !string.IsNullOrEmpty(settingsText))
-            {
-                var systemMessage = new Dictionary<string, string>
-                {
-                    { "role", "system" },
-                    { "content", settingsText }
-                };
-                pastMessages.Add(systemMessage);
-            }
-
-            var newMessage = new Dictionary<string, string>
-            {
-                { "role", "user" },
-                { "content", newMessageText }
-            };
-            pastMessages.Add(newMessage);
-
-            var responseMessageText = CallOpenAI(pastMessages);
-            var responseMessage = new Dictionary<string, string>
-            {
-                { "role", "assistant" },
-                { "content", responseMessageText }
-            };
-            pastMessages.Add(responseMessage);
-
-            return (responseMessageText, pastMessages);
-        }
-
-        private string CallOpenAI(List<Dictionary<string, string>> messages)
-        {
-            using (var httpClient = new HttpClient())
-            {
-                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {OPENAI_API_KEY}");
-                var requestData = new
-                {
-                    model = "gpt-3.5-turbo",
-                    messages = messages
-                };
-                var response = httpClient.PostAsync(OPENAI_API_URL,
-                        new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, "application/json"))
-                    .Result;
-                var responseBody = response.Content.ReadAsStringAsync().Result;
-                var jsonResponse = JObject.Parse(responseBody);
-                Debug.Log(jsonResponse.ToString());
-                return jsonResponse["choices"][0]["message"]["content"].ToString();
-            }
-        }
+        
         private static class Styles
         {
             private static GUIContent[] _tabToggles = null;
@@ -189,8 +124,6 @@ namespace io.github.azukimochi
                 }
             }
             public static readonly GUIStyle TabButtonStyle = "LargeButton";
-
-            // GUI.ToolbarButtonSize.FitToContentsも設定できる
             public static readonly GUI.ToolbarButtonSize TabButtonSize = GUI.ToolbarButtonSize.Fixed;
         }
     }
