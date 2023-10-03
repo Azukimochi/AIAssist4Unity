@@ -1,6 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
-
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -21,7 +22,9 @@ namespace io.github.azukimochi
         private Vector2 _scrollPosition_Settings = Vector2.zero;
         private Vector2 _scrollPosition_ErrorLog = Vector2.zero;
         private Vector2 _scrollPosition_Solution = Vector2.zero;
-        
+        private bool _SolutionButton = false;
+        private bool _UpdateSolution = false;
+
         enum Tab
         {
             Main,
@@ -36,6 +39,16 @@ namespace io.github.azukimochi
         {
             GetWindow<AIAssistHelperWindow>("AI Assist Helper");
         }
+
+        private void Update()
+        {
+            if(_UpdateSolution)
+            {
+                _UpdateSolution = false;
+                Repaint();
+            }
+        }
+
         private void OnEnable (){
             Application.logMessageReceived += HandleLog;
         }
@@ -84,21 +97,35 @@ namespace io.github.azukimochi
                 GUI.FocusControl("ErrorLogField");
             }
 
+            EditorGUI.BeginDisabledGroup(_SolutionButton);
             if (GUILayout.Button("Get Solution"))
             {
-                // OpenAI APIを呼び出して解決策を取得する関数
-                //solution = GetSolutionFromChatGPT(errorLog);
+                _SolutionButton = true;
+                solution = "処理中・・・";
                 
-                solution = ChatGPTHandler.Completion(errorLog, settings, OPENAI_API_KEY, OPENAI_API_URL, model[modelIndex]).Item1;
+                Task.Run(async () =>
+                {
+                    var result = await CallOpenAI();
+                    solution = result;
+                    _SolutionButton = false;
+                    _UpdateSolution = true;
+                });
             }
-
-            
             GUILayout.Label("Solution", EditorStyles.boldLabel);
             _scrollPosition_Solution = EditorGUILayout.BeginScrollView(_scrollPosition_Solution, GUILayout.Height(300));
             {
-                solution = EditorGUILayout.TextArea(solution, GUILayout.ExpandHeight(true));
+                EditorGUILayout.TextArea(solution, GUILayout.ExpandHeight(true));
             }
             EditorGUILayout.EndScrollView();
+            EditorGUI.EndDisabledGroup();
+        }
+
+        public async Task<string> CallOpenAI()
+        {
+            string result  = ChatGPTHandler.Completion(errorLog, settings, OPENAI_API_KEY, OPENAI_API_URL,
+                    model[modelIndex])
+                .Item1;
+            return result;
         }
         public void DrawSettingsTab()
         {
