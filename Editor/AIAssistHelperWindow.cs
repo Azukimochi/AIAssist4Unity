@@ -24,6 +24,9 @@ namespace io.github.azukimochi
         private Vector2 _scrollPosition_Solution = Vector2.zero;
         private bool _SolutionButton = false;
         private bool _UpdateSolution = false;
+        
+        private string[] model = new[] {"gpt-3.5-turbo", "gpt-4" };
+        private int modelIndex = 0;
 
         enum Tab
         {
@@ -31,9 +34,6 @@ namespace io.github.azukimochi
             Settings,
         }
 
-        private string[] model = new[] {"gpt-3.5-turbo", "gpt-4" };
-        private int modelIndex = 0;
-        
         [MenuItem("Window/AI Assist Helper")]
         public static void ShowWindow()
         {
@@ -51,6 +51,9 @@ namespace io.github.azukimochi
 
         private void OnEnable (){
             Application.logMessageReceived += HandleLog;
+            OPENAI_API_KEY = Utils.DecryptAES(EditorPrefs.GetString("io.github.Azukimochi.OPENAI_API_KEY", ""));
+            modelIndex = EditorPrefs.GetInt("io.github.Azukimochi.MODEL_INDEX", 0);
+            settings = EditorPrefs.GetString("io.github.Azukimochi.SETTING_PRONPT", settings);
         }
         private void OnDisable()
         {
@@ -130,7 +133,8 @@ namespace io.github.azukimochi
         public void DrawSettingsTab()
         {
             GUILayout.Label("OpenAI API Key" , EditorStyles.boldLabel);
-            OPENAI_API_KEY = EditorGUILayout.TextField(OPENAI_API_KEY);
+            OPENAI_API_KEY = EditorGUILayout.PasswordField(OPENAI_API_KEY);
+            
             
             GUILayout.Space(20);
 
@@ -142,12 +146,19 @@ namespace io.github.azukimochi
             
             modelIndex = EditorGUILayout.Popup(label:new GUIContent("Select Model"), selectedIndex:modelIndex, displayedOptions:popupModels);
             
-            GUILayout.Label("Settings", EditorStyles.boldLabel);
+            GUILayout.Label("SettingPronpt", EditorStyles.boldLabel);
             _scrollPosition_Settings = EditorGUILayout.BeginScrollView(_scrollPosition_Settings, GUILayout.Height(100));
             {
                 settings = EditorGUILayout.TextArea(settings, GUILayout.ExpandHeight(true));
             };
-            EditorGUILayout.EndScrollView(); 
+            EditorGUILayout.EndScrollView();
+            GUILayout.Space(20);
+            if (GUILayout.Button("Apply"))
+            {
+                EditorPrefs.SetString("io.github.Azukimochi.OPENAI_API_KEY", Utils.EncryptAES(OPENAI_API_KEY));
+                EditorPrefs.SetInt("io.github.Azukimochi.MODEL_INDEX", modelIndex);
+                EditorPrefs.SetString("io.github.Azukimochi.SETTING_PRONPT", settings);
+            }
         }
         
         private static class Styles
