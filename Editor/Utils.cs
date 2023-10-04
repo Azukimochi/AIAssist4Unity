@@ -9,103 +9,65 @@ namespace io.github.azukimochi
 {
     public class Utils : EditorWindow
     {
+        // 初期化ベクトル"<半角16文字（1byte=8bit, 8bit*16=128bit>"
+        private const string AES_IV_256 = @"mEa9VeVjZfFACY%~";
+
+        // 暗号化鍵<半角32文字（8bit*32文字=256bit）>
+        private const string AES_Key_256 = @"k653A&k|WDRkjaef7yh6uhwFzk73MNf3";
         
-        // AES暗号化 key生成するための文字列 (256bitキー(32文字))
-        private const string _aesKey = "12345678901234567890123456789012";
-        // AES暗号化 初期化ベクトルを生成するための文字列 (128bit(16文字))
-        private const string _aesIv = "1234567890123456";
-
-        // 参照元：c#の暗号化クラスを使ってみた（AES,RSA）
-        // https://qiita.com/YoshijiGates/items/6c331924d4fcbcf6627a
-
-        public static string AesEncrypt(string plain_text)
+        public static string EncryptAES(string plainText)
         {
-            // 暗号化した文字列格納用
-            string encrypted_str;
+            if (plainText == null || plainText.Length <= 0)
+                throw new ArgumentNullException("plainText");
+            byte[] encrypted;
 
-            // Aesオブジェクトを作成
-            using (Aes aes = Aes.Create())
+            using (Aes aesAlg = Aes.Create())
             {
-                // Encryptorを作成
-                using (ICryptoTransform encryptor =
-                       aes.CreateEncryptor(Encoding.UTF8.GetBytes(_aesKey), Encoding.UTF8.GetBytes(_aesIv)))
-                {
-                    // 出力ストリームを作成
-                    using (MemoryStream out_stream = new MemoryStream())
-                    {
-                        // 暗号化して書き出す
-                        using (CryptoStream cs = new CryptoStream(out_stream, encryptor, CryptoStreamMode.Write))
-                        {
-                            using (StreamWriter sw = new StreamWriter(cs))
-                            {
-                                // 出力ストリームに書き出し
-                                sw.Write(plain_text);
-                            };
-                        }
-                        // Base64文字列にする
-                        byte[] result = out_stream.ToArray();
-                        encrypted_str = Convert.ToBase64String(result);
-                    }
-                    
-                }
-                
-            }
+                aesAlg.IV = Encoding.UTF8.GetBytes(AES_IV_256);
+                aesAlg.Key = Encoding.UTF8.GetBytes(AES_Key_256);
 
-            return encrypted_str;
+                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+
+                using (MemoryStream msEncrypt = new MemoryStream())
+                {
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                        {
+                            swEncrypt.Write(plainText);
+                        }
+                        encrypted = msEncrypt.ToArray();
+                    }
+                }
+            }
+            return (System.Convert.ToBase64String(encrypted));
         }
 
-        /// <summary>
-        /// 対称鍵暗号を使って暗号文を復号する
-        /// </summary>
-        /// <param name="cipher">暗号化された文字列</param>
-        /// <param name="iv">対称アルゴリズムの初期ベクター</param>
-        /// <param name="key">対称アルゴリズムの共有鍵</param>
-        /// <returns>復号された文字列</returns>
-        public static string AesDecrypt(string base64_text)
+        public static string DecryptAES(string cipherText)
         {
-            string plain_text = null;
+            if (cipherText == null || cipherText.Length <= 0)
+                throw new ArgumentNullException("cipherText");
+            string plaintext = null;
 
-            if (string.IsNullOrEmpty(base64_text))
+            using (Aes aesAlg = Aes.Create())
             {
-                Debug.Log("base64_text is null or empty");
-                return "";
-            }
-            Debug.Log("base64_text: " + base64_text);
+                aesAlg.IV = Encoding.UTF8.GetBytes(AES_IV_256);
+                aesAlg.Key = Encoding.UTF8.GetBytes(AES_Key_256);
 
-            try
-            {
-                // Base64文字列をバイト型配列に変換
-                byte[] cipher = Convert.FromBase64String(base64_text);
+                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
 
-                // AESオブジェクトを作成
-                using (Aes aes = Aes.Create())
+                using (MemoryStream msDecrypt = new MemoryStream(System.Convert.FromBase64String(cipherText)))
                 {
-                    // 復号器を作成
-                    using (ICryptoTransform decryptor =
-                           aes.CreateDecryptor(Encoding.UTF8.GetBytes(_aesKey), Encoding.UTF8.GetBytes(_aesIv)))
+                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
                     {
-                        // 復号用ストリームを作成
-                        using (MemoryStream in_stream = new MemoryStream(cipher))
+                        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
                         {
-                            // 一気に復号
-                            using (CryptoStream cs = new CryptoStream(in_stream, decryptor, CryptoStreamMode.Read))
-                            {
-                                using (StreamReader sr = new StreamReader(cs))
-                                {
-                                    plain_text = sr.ReadToEnd();
-                                    Debug.Log("plain_text: " + plain_text);
-                                }
-                            }
+                            plaintext = srDecrypt.ReadToEnd();
                         }
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.Log("Decryption failed: " + ex.Message);
-            }
-            
-            return plain_text;
+            return plaintext;
         }
     }
 }
