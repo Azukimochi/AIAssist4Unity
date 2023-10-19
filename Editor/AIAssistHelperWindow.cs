@@ -24,8 +24,8 @@ namespace io.github.azukimochi
         private Vector2 _scrollPosition_Solution = Vector2.zero;
         private bool _SolutionButton = false;
         private bool _UpdateSolution = false;
-        
-        private string[] model = new[] {"gpt-3.5-turbo", "gpt-4" };
+
+        private string[] model = new[] { "gpt-3.5-turbo", "gpt-4" };
         private int modelIndex = 0;
 
         enum Tab
@@ -42,14 +42,15 @@ namespace io.github.azukimochi
 
         private void Update()
         {
-            if(_UpdateSolution)
+            if (_UpdateSolution)
             {
                 _UpdateSolution = false;
                 Repaint();
             }
         }
 
-        private void OnEnable (){
+        private void OnEnable()
+        {
             Application.logMessageReceived += HandleLog;
             OPENAI_API_KEY = Utils.DecryptAES(EditorPrefs.GetString("io.github.Azukimochi.OPENAI_API_KEY", ""));
             modelIndex = EditorPrefs.GetInt("io.github.Azukimochi.MODEL_INDEX", 0);
@@ -70,7 +71,7 @@ namespace io.github.azukimochi
         void OnGUI()
         {
             _tab = (Tab)GUILayout.Toolbar((int)_tab, Styles.TabToggles, Styles.TabButtonStyle, Styles.TabButtonSize);
-            
+
             switch (_tab)
             {
                 case Tab.Main:
@@ -83,19 +84,22 @@ namespace io.github.azukimochi
         }
         public void DrawMainTab()
         {
-            GUILayout.FlexibleSpace();
-            var style = new GUIStyle(EditorStyles.textArea) {wordWrap = true};
-            
-            GUILayout.Label("Error Log", EditorStyles.boldLabel);
+            var textAreaStyle = new GUIStyle(EditorStyles.textArea) { wordWrap = true };
+            GUILayout.BeginVertical();
 
-            _scrollPosition_ErrorLog = EditorGUILayout.BeginScrollView(_scrollPosition_ErrorLog, GUILayout.Height(100));
+            // Error Log Section
+            GUILayout.BeginVertical();
+            GUILayout.Label("Error Log", EditorStyles.boldLabel);
+            _scrollPosition_ErrorLog = EditorGUILayout.BeginScrollView(_scrollPosition_ErrorLog);
             {
-                errorLog = EditorGUILayout.TextArea(errorLog, GUILayout.ExpandHeight(true));
-            };
-            EditorGUILayout.EndScrollView(); 
-            
-            GUI.SetNextControlName("ErrorLogField");
-            if(GUILayout.Button("Clear Error Log")) {
+                GUI.SetNextControlName("ErrorLogField");
+                errorLog = EditorGUILayout.TextArea(errorLog, textAreaStyle, GUILayout.ExpandHeight(true));
+            }
+            EditorGUILayout.EndScrollView();
+            GUILayout.EndVertical();
+
+            if (GUILayout.Button("Clear Error Log"))
+            {
                 errorLog = "";
                 GUI.FocusControl("ErrorLogField");
             }
@@ -105,7 +109,7 @@ namespace io.github.azukimochi
             {
                 _SolutionButton = true;
                 solution = "処理中・・・";
-                
+
                 Task.Run(async () =>
                 {
                     var result = await CallOpenAI();
@@ -114,28 +118,35 @@ namespace io.github.azukimochi
                     _UpdateSolution = true;
                 });
             }
+
+            // Solution Section
+            GUILayout.BeginVertical();
             GUILayout.Label("Solution", EditorStyles.boldLabel);
-            _scrollPosition_Solution = EditorGUILayout.BeginScrollView(_scrollPosition_Solution, GUILayout.Height(300));
+            _scrollPosition_Solution = EditorGUILayout.BeginScrollView(_scrollPosition_Solution);
             {
-                EditorGUILayout.TextArea(solution, GUILayout.ExpandHeight(true));
+                EditorGUILayout.TextArea(solution, textAreaStyle, GUILayout.ExpandHeight(true));
             }
             EditorGUILayout.EndScrollView();
             EditorGUI.EndDisabledGroup();
+            GUILayout.EndVertical();
+
+            GUILayout.EndVertical();
         }
 
         public async Task<string> CallOpenAI()
         {
-            string result  = ChatGPTHandler.Completion(errorLog, settings, OPENAI_API_KEY, OPENAI_API_URL,
+            string result = ChatGPTHandler.Completion(errorLog, settings, OPENAI_API_KEY, OPENAI_API_URL,
                     model[modelIndex])
                 .Item1;
             return result;
         }
         public void DrawSettingsTab()
         {
-            GUILayout.Label("OpenAI API Key" , EditorStyles.boldLabel);
+            var textAreaStyle = new GUIStyle(EditorStyles.textArea) { wordWrap = true };
+            GUILayout.Label("OpenAI API Key", EditorStyles.boldLabel);
             OPENAI_API_KEY = EditorGUILayout.PasswordField(OPENAI_API_KEY);
-            
-            
+
+
             GUILayout.Space(20);
 
             var popupModels = new[]
@@ -143,13 +154,13 @@ namespace io.github.azukimochi
                 new GUIContent(model[0]),
                 new GUIContent(model[1]),
             };
-            
-            modelIndex = EditorGUILayout.Popup(label:new GUIContent("Select Model"), selectedIndex:modelIndex, displayedOptions:popupModels);
-            
+
+            modelIndex = EditorGUILayout.Popup(label: new GUIContent("Select Model"), selectedIndex: modelIndex, displayedOptions: popupModels);
+
             GUILayout.Label("SettingPronpt", EditorStyles.boldLabel);
             _scrollPosition_Settings = EditorGUILayout.BeginScrollView(_scrollPosition_Settings, GUILayout.Height(100));
             {
-                settings = EditorGUILayout.TextArea(settings, GUILayout.ExpandHeight(true));
+                settings = EditorGUILayout.TextArea(settings, textAreaStyle, GUILayout.ExpandHeight(true));
             };
             EditorGUILayout.EndScrollView();
             GUILayout.Space(20);
@@ -160,13 +171,16 @@ namespace io.github.azukimochi
                 EditorPrefs.SetString("io.github.Azukimochi.SETTING_PRONPT", settings);
             }
         }
-        
+
         private static class Styles
         {
             private static GUIContent[] _tabToggles = null;
-            public static GUIContent[] TabToggles{
-                get {
-                    if (_tabToggles == null) {
+            public static GUIContent[] TabToggles
+            {
+                get
+                {
+                    if (_tabToggles == null)
+                    {
                         _tabToggles = System.Enum.GetNames(typeof(Tab)).Select(x => new GUIContent(x)).ToArray();
                     }
                     return _tabToggles;
